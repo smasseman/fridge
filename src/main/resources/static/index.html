@@ -1,0 +1,34 @@
+<html>
+  <body>
+    Current: <span id="temp"></span><br>
+    Wanted: <span id="wanted"></span><br>
+    Time: <span id="time"></span><br>
+    <button onclick="changeWanted(1)">+</button>
+    <button onclick="changeWanted(-1)">-</button>
+  </body>
+  <script>
+
+    function changeWanted(value) {
+      const current = Number(document.getElementById("wanted").innerText);
+      const wanted = current + value;
+      const http = new XMLHttpRequest();
+      http.open('POST', '/api/set', true);
+      http.setRequestHeader('Content-type', 'text/plain');
+      http.onreadystatechange = function() {//Call a function when the state changes.
+        if(http.readyState === 4 && http.status !== 204) {
+          alert("Unexpected: " + http.status);
+        }
+      }
+      http.send(wanted);
+    }
+    const eventSource = new EventSource('/api/state');
+
+    eventSource.onmessage = e => {
+      const data = JSON.parse(e.data);
+      document.getElementById("temp").innerText = data.temperature;
+      document.getElementById("wanted").innerText = data.wanted;
+      document.getElementById("time").innerText = new Date(data.time).toString();
+    };
+
+  </script>
+</html>
